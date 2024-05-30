@@ -1,0 +1,306 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Discount {
+  amount     Float    @default(0)
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+  id         String   @id @default(cuid())
+  name       String?
+  orderId    String
+  time       DateTime @default(now())
+
+  locationPointRecord LocationPointExpenditureRecord?
+
+  @@index([orderId])
+}
+
+model Campaign {
+  id                    String                 @id @default(cuid())
+  locationPointCampaign LocationPointCampaign?
+  discounts             Discount[]
+  // ...more campaign
+}
+
+model Schedule {
+  id String @id
+
+  startedAt DateTime?
+  endedAt   DateTime?
+
+  triggerTimeType SCHEDULE_TIME_UNIT?
+  triggerValue    Int?
+
+  onceTriggerTime DateTime?
+
+  type SCHEDULE_TYPE
+
+  status SCHEDULE_STATUS @default(ACTIVATED)
+
+  locationPointSchedule LocationPointSchedule?
+  systemSchedule        SystemSchedule?
+
+  scheduleHistorys ScheduleHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([status])
+}
+
+enum SCHEDULE_TIME_UNIT {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum SCHEDULE_TYPE {
+  CYCLOCALLY // 循環
+  ONCE // 一次性
+}
+
+enum SCHEDULE_STATUS {
+  ACTIVATED // 啟用
+  STOPPED // 停用 ( 可以恢復 )
+  TERMINATED // 終止 ( 不可恢復 ) 
+}
+
+model ScheduleHistory {
+  schedule     Schedule @relation(fields: [scheduleId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  scheduleId   String
+  scheduleName String
+
+  status SCHEDULE_HISTORY_STATUS
+
+  detail Json
+
+  createdAt DateTime @default(now())
+
+  @@id([scheduleId, status, createdAt])
+  @@index([status])
+  @@index([scheduleId])
+  @@index([createdAt])
+  @@index([scheduleName])
+}
+
+enum SCHEDULE_HISTORY_STATUS {
+  SUCCESSED
+  FAILED
+}
+
+model SystemSchedule {
+  id String @id
+
+  name String @unique
+
+  schedule Schedule @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Location {
+  id   String @id @default(cuid())
+  name String @unique
+
+  users  LocationMember[]
+  groups LocationMemberGroup[]
+
+  pointCampaign LocationPointCampaign?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LocationPointCampaign {
+  id       String   @id @default(cuid())
+  campaign Campaign @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  locationId String   @unique
+
+  schedules LocationPointSchedule[]
+  incomes   LocationPointIncomeRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LocationMember {
+  id   String @id
+  name String
+
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  locationId String
+
+  groups LocationMemberGroup[]
+  points LocationPoint[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([locationId, name])
+  @@index([locationId])
+  @@index([name])
+}
+
+model LocationPoint {
+  id String @id @default(cuid())
+
+  expiredAt DateTime?
+
+  owner   LocationMember @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  ownerId String
+
+  // 記錄清除等同清除點數
+  fromRecord   LocationPointIncomeRecord @relation(fields: [fromRecordId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  fromRecordId String
+
+  expendedRecords LocationPointExpenditureRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fromRecordId])
+  @@index([ownerId])
+  @@index([expiredAt])
+  @@index([createdAt])
+}
+
+model LocationMemberGroup {
+  id   String @id @default(cuid())
+  name String
+
+  owner   Location @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ownerId String
+
+  members   LocationMember[]
+  schedules LocationPointSchedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, name])
+  @@index([ownerId])
+}
+
+model LocationPointSchedule {
+  id       String   @id @default(cuid())
+  schedule Schedule @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  name String
+
+  campaign   LocationPointCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  campaignId String
+
+  groups  LocationMemberGroup[]
+  incomes LocationPointIncomeRecord[]
+
+  durationDays Int? // cyclocally
+  expiredAt    DateTime? // once
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([campaignId, name])
+  @@index([campaignId])
+}
+
+model LocationPointIncomeRecord {
+  id String @id @default(cuid())
+
+  eachAmount Float
+  name       String
+
+  campaign   LocationPointCampaign @relation(fields: [campaignId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  campaignId String
+
+  fromSchedule   LocationPointSchedule? @relation(fields: [fromScheduleId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  fromScheduleId String?
+
+  fromExpenditureRecord   LocationPointExpenditureRecord? @relation(fields: [fromExpenditureRecordId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  fromExpenditureRecordId String?
+
+  issuedPoints LocationPoint[]
+
+  type LOCATION_POINT_INCOME_RECORD_TYPE
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignId])
+  @@index([fromScheduleId])
+  @@index([fromExpenditureRecordId])
+  @@index([name])
+  @@index([type])
+}
+
+enum LOCATION_POINT_INCOME_RECORD_TYPE {
+  SCHEDULE
+  MANUAL
+  REFUND
+}
+
+model LocationPointExpenditureRecord {
+  id String @id @default(cuid())
+
+  amount Float
+
+  point   LocationPoint @relation(fields: [pointId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  pointId String
+
+  pointTranscation   LocationPointTranscation @relation(fields: [pointTranscationId], references: [id])
+  pointTranscationId String
+
+  refundedToNewIncomeRecords LocationPointIncomeRecord[]
+
+  discount   Discount? @relation(fields: [discountId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  discountId String?   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pointId])
+  @@index([pointTranscationId])
+  @@index([discountId])
+}
+
+model LocationPointTranscation {
+  id String @id @default(cuid())
+
+  orderId String?
+
+  pointExpendeds LocationPointExpenditureRecord[]
+
+  type LOCATION_POINT_TRANSACTION_TYPE
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum LOCATION_POINT_TRANSACTION_TYPE {
+  ORDER
+  RECOVERY
+}

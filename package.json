@@ -1,0 +1,23 @@
+{
+  "name": "point-poc",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/lodash": "^4.17.4",
+    "prisma": "^5.14.0",
+    "prisma-dbml-generator": "^0.12.0"
+  },
+  "scripts": {
+    "start": "bun src/index.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@paralleldrive/cuid2": "^2.2.2",
+    "@prisma/client": "^5.14.0",
+    "date-fns": "^3.6.0",
+    "lodash": "^4.17.21"
+  }
+}

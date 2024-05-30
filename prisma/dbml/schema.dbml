@@ -1,0 +1,255 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Discount {
+  amount Float [not null, default: 0]
+  campaign Campaign [not null]
+  campaignId String [not null]
+  id String [pk]
+  name String
+  orderId String [not null]
+  time DateTime [default: `now()`, not null]
+  locationPointRecord LocationPointExpenditureRecord
+}
+
+Table Campaign {
+  id String [pk]
+  locationPointCampaign LocationPointCampaign
+  discounts Discount [not null]
+}
+
+Table Schedule {
+  id String [pk]
+  startedAt DateTime
+  endedAt DateTime
+  triggerTimeType SCHEDULE_TIME_UNIT
+  triggerValue Int
+  onceTriggerTime DateTime
+  type SCHEDULE_TYPE [not null]
+  status SCHEDULE_STATUS [not null, default: 'ACTIVATED']
+  locationPointSchedule LocationPointSchedule
+  systemSchedule SystemSchedule
+  scheduleHistorys ScheduleHistory [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table ScheduleHistory {
+  schedule Schedule [not null]
+  scheduleId String [not null]
+  scheduleName String [not null]
+  status SCHEDULE_HISTORY_STATUS [not null]
+  detail Json [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (scheduleId, status, createdAt) [pk]
+  }
+}
+
+Table SystemSchedule {
+  id String [pk]
+  name String [unique, not null]
+  schedule Schedule [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Location {
+  id String [pk]
+  name String [unique, not null]
+  users LocationMember [not null]
+  groups LocationMemberGroup [not null]
+  pointCampaign LocationPointCampaign
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table LocationPointCampaign {
+  id String [pk]
+  campaign Campaign [not null]
+  location Location [not null]
+  locationId String [unique, not null]
+  schedules LocationPointSchedule [not null]
+  incomes LocationPointIncomeRecord [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table LocationMember {
+  id String [pk]
+  name String [not null]
+  location Location [not null]
+  locationId String [not null]
+  groups LocationMemberGroup [not null]
+  points LocationPoint [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (locationId, name) [unique]
+  }
+}
+
+Table LocationPoint {
+  id String [pk]
+  expiredAt DateTime
+  owner LocationMember [not null]
+  ownerId String [not null]
+  fromRecord LocationPointIncomeRecord [not null]
+  fromRecordId String [not null]
+  expendedRecords LocationPointExpenditureRecord [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table LocationMemberGroup {
+  id String [pk]
+  name String [not null]
+  owner Location [not null]
+  ownerId String [not null]
+  members LocationMember [not null]
+  schedules LocationPointSchedule [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (ownerId, name) [unique]
+  }
+}
+
+Table LocationPointSchedule {
+  id String [pk]
+  schedule Schedule [not null]
+  name String [not null]
+  campaign LocationPointCampaign [not null]
+  campaignId String [not null]
+  groups LocationMemberGroup [not null]
+  incomes LocationPointIncomeRecord [not null]
+  durationDays Int
+  expiredAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (campaignId, name) [unique]
+  }
+}
+
+Table LocationPointIncomeRecord {
+  id String [pk]
+  eachAmount Float [not null]
+  name String [not null]
+  campaign LocationPointCampaign [not null]
+  campaignId String [not null]
+  fromSchedule LocationPointSchedule
+  fromScheduleId String
+  fromExpenditureRecord LocationPointExpenditureRecord
+  fromExpenditureRecordId String
+  issuedPoints LocationPoint [not null]
+  type LOCATION_POINT_INCOME_RECORD_TYPE [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table LocationPointExpenditureRecord {
+  id String [pk]
+  amount Float [not null]
+  point LocationPoint [not null]
+  pointId String [not null]
+  pointTranscation LocationPointTranscation [not null]
+  pointTranscationId String [not null]
+  refundedToNewIncomeRecords LocationPointIncomeRecord [not null]
+  discount Discount
+  discountId String [unique]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table LocationPointTranscation {
+  id String [pk]
+  orderId String
+  pointExpendeds LocationPointExpenditureRecord [not null]
+  type LOCATION_POINT_TRANSACTION_TYPE [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table LocationMemberToLocationMemberGroup {
+  groupsId String [ref: > LocationMemberGroup.id]
+  membersId String [ref: > LocationMember.id]
+}
+
+Table LocationMemberGroupToLocationPointSchedule {
+  schedulesId String [ref: > LocationPointSchedule.id]
+  groupsId String [ref: > LocationMemberGroup.id]
+}
+
+Enum SCHEDULE_TIME_UNIT {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+Enum SCHEDULE_TYPE {
+  CYCLOCALLY
+  ONCE
+}
+
+Enum SCHEDULE_STATUS {
+  ACTIVATED
+  STOPPED
+  TERMINATED
+}
+
+Enum SCHEDULE_HISTORY_STATUS {
+  SUCCESSED
+  FAILED
+}
+
+Enum LOCATION_POINT_INCOME_RECORD_TYPE {
+  SCHEDULE
+  MANUAL
+  REFUND
+}
+
+Enum LOCATION_POINT_TRANSACTION_TYPE {
+  ORDER
+  RECOVERY
+}
+
+Ref: Discount.campaignId > Campaign.id
+
+Ref: ScheduleHistory.scheduleId > Schedule.id [delete: No Action]
+
+Ref: SystemSchedule.id - Schedule.id [delete: Cascade]
+
+Ref: LocationPointCampaign.id - Campaign.id [delete: Cascade]
+
+Ref: LocationPointCampaign.locationId - Location.id [delete: Cascade]
+
+Ref: LocationMember.locationId > Location.id [delete: Cascade]
+
+Ref: LocationPoint.ownerId > LocationMember.id [delete: No Action]
+
+Ref: LocationPoint.fromRecordId > LocationPointIncomeRecord.id [delete: Cascade]
+
+Ref: LocationMemberGroup.ownerId > Location.id [delete: Cascade]
+
+Ref: LocationPointSchedule.id - Schedule.id [delete: Cascade]
+
+Ref: LocationPointSchedule.campaignId > LocationPointCampaign.id [delete: Cascade]
+
+Ref: LocationPointIncomeRecord.campaignId > LocationPointCampaign.id [delete: No Action]
+
+Ref: LocationPointIncomeRecord.fromScheduleId > LocationPointSchedule.id [delete: No Action]
+
+Ref: LocationPointIncomeRecord.fromExpenditureRecordId > LocationPointExpenditureRecord.id [delete: No Action]
+
+Ref: LocationPointExpenditureRecord.pointId > LocationPoint.id [delete: No Action]
+
+Ref: LocationPointExpenditureRecord.pointTranscationId > LocationPointTranscation.id
+
+Ref: LocationPointExpenditureRecord.discountId - Discount.id [delete: No Action]
