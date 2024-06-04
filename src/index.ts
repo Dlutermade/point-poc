@@ -1,7 +1,7 @@
 import { createMockLocation } from "./location/createMockLocation";
 import { createMockLocationMemberGroups } from "./location/createMockLocationMemberGroups";
 import { createMockLocationMembers } from "./location/createMockLocationMembers";
-import { manualAddPointToMembers } from "./point/manualaddPointToMembers";
+import { manualAddPointToMembers } from "./point/manualAddPointToMembers";
 import {
   needCreateMockLocation,
   needCreateMockLocationMembers,

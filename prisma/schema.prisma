@@ -236,8 +236,8 @@ model LocationPointIncomeRecord {
   fromSchedule   LocationPointSchedule? @relation(fields: [fromScheduleId], references: [id], onDelete: NoAction, onUpdate: Cascade)
   fromScheduleId String?
 
-  fromExpenditureRecord   LocationPointExpenditureRecord? @relation(fields: [fromExpenditureRecordId], references: [id], onDelete: NoAction, onUpdate: Cascade)
-  fromExpenditureRecordId String?
+  fromTranscationWithRefund   LocationPointTranscation? @relation(fields: [fromTranscationIdWithRefund], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  fromTranscationIdWithRefund String?
 
   issuedPoints LocationPoint[]
 
@@ -248,7 +248,7 @@ model LocationPointIncomeRecord {
 
   @@index([campaignId])
   @@index([fromScheduleId])
-  @@index([fromExpenditureRecordId])
+  @@index([fromTranscationIdWithRefund])
   @@index([name])
   @@index([type])
 }
@@ -270,8 +270,6 @@ model LocationPointExpenditureRecord {
   pointTranscation   LocationPointTranscation @relation(fields: [pointTranscationId], references: [id])
   pointTranscationId String
 
-  refundedToNewIncomeRecords LocationPointIncomeRecord[]
-
   discount   Discount? @relation(fields: [discountId], references: [id], onDelete: NoAction, onUpdate: Cascade)
   discountId String?   @unique
 
@@ -289,6 +287,7 @@ model LocationPointTranscation {
   orderId String?
 
   pointExpendeds LocationPointExpenditureRecord[]
+  refundToIncomes  LocationPointIncomeRecord[]
 
   type LOCATION_POINT_TRANSACTION_TYPE
 
