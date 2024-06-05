@@ -229,8 +229,9 @@ model LocationPointSchedule {
 }
 
 enum LOCATION_POINT_APPLIED_TYPE {
-  GROUP
+  ALL
   MEMBER
+  GROUP
 }
 
 model LocationPointIncomeRecord {
