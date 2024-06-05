@@ -218,8 +218,7 @@ model LocationPointSchedule {
 
   incomes LocationPointIncomeRecord[]
 
-  durationDays Int? // cyclocally
-  expiredAt    DateTime? // once
+  durationDays Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
