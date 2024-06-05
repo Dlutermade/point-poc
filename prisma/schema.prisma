@@ -212,8 +212,10 @@ model LocationPointSchedule {
   campaign   LocationPointCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   campaignId String
 
-  groups  LocationMemberGroup[]
-  members LocationMember[]
+  groups      LocationMemberGroup[]
+  members     LocationMember[]
+  appliedType LOCATION_POINT_APPLIED_TYPE
+
   incomes LocationPointIncomeRecord[]
 
   durationDays Int? // cyclocally
@@ -224,6 +226,11 @@ model LocationPointSchedule {
 
   @@unique([campaignId, name])
   @@index([campaignId])
+}
+
+enum LOCATION_POINT_APPLIED_TYPE {
+  GROUP
+  MEMBER
 }
 
 model LocationPointIncomeRecord {
