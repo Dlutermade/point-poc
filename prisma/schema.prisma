@@ -45,7 +45,7 @@ model Schedule {
   endedAt   DateTime?
 
   triggerTimeType SCHEDULE_TIME_UNIT?
-  triggerValue    Int?
+  triggerValues   Int[]
 
   onceTriggerTime DateTime?
 
@@ -73,7 +73,7 @@ enum SCHEDULE_TIME_UNIT {
 }
 
 enum SCHEDULE_TYPE {
-  CYCLOCALLY // 循環
+  CYCLICALLY // 循環
   ONCE // 一次性
 }
 
@@ -102,7 +102,7 @@ model ScheduleHistory {
 }
 
 enum SCHEDULE_HISTORY_STATUS {
-  SUCCESSED
+  SUCCESSES
   FAILED
 }
 
@@ -126,8 +126,38 @@ model Location {
 
   pointCampaign LocationPointCampaign?
 
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  LocationBudget LocationBudget[]
+}
+
+model LocationBudget {
+  id         String                 @id
+  action     LOCATION_BUDGET_ACTION
+  amount     Float
+  remark     String?
+  location   Location               @relation(fields: [locationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  locationId String
+
+  creditedAt DateTime? @default(now())
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@index([locationId])
+  @@index([action])
+}
+
+enum LOCATION_BUDGET_ACTION {
+  // 匯入
+  IMPORT
+  // 返還
+  RETURN
+  // 使用
+  USE
+  // 匯出
+  EXPORT
+  // 作廢
+  INVALID
 }
 
 model LocationPointCampaign {
@@ -150,6 +180,7 @@ model LocationMember {
 
   location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   locationId String
+  isDeleted  Boolean  @default(false)
 
   groups    LocationMemberGroup[]
   points    LocationPoint[]
@@ -161,6 +192,7 @@ model LocationMember {
   @@unique([locationId, name])
   @@index([locationId])
   @@index([name])
+  @@index([isDeleted])
 }
 
 model LocationPoint {

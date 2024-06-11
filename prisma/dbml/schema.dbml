@@ -24,7 +24,7 @@ Table Schedule {
   startedAt DateTime
   endedAt DateTime
   triggerTimeType SCHEDULE_TIME_UNIT
-  triggerValue Int
+  triggerValues Int[] [not null]
   onceTriggerTime DateTime
   type SCHEDULE_TYPE [not null]
   status SCHEDULE_STATUS [not null, default: 'ACTIVATED']
@@ -64,6 +64,18 @@ Table Location {
   pointCampaign LocationPointCampaign
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+  LocationBudget LocationBudget [not null]
+}
+
+Table LocationBudget {
+  id String [pk]
+  action LOCATION_BUDGET_ACTION [not null]
+  amount Float [not null]
+  remark String
+  location Location [not null]
+  locationId String [not null]
+  creditedAt DateTime [default: `now()`]
+  createdAt DateTime [default: `now()`, not null]
 }
 
 Table LocationPointCampaign {
@@ -82,6 +94,7 @@ Table LocationMember {
   name String [not null]
   location Location [not null]
   locationId String [not null]
+  isDeleted Boolean [not null, default: false]
   groups LocationMemberGroup [not null]
   points LocationPoint [not null]
   schedules LocationPointSchedule [not null]
@@ -201,7 +214,7 @@ Enum SCHEDULE_TIME_UNIT {
 }
 
 Enum SCHEDULE_TYPE {
-  CYCLOCALLY
+  CYCLICALLY
   ONCE
 }
 
@@ -212,8 +225,16 @@ Enum SCHEDULE_STATUS {
 }
 
 Enum SCHEDULE_HISTORY_STATUS {
-  SUCCESSED
+  SUCCESSES
   FAILED
+}
+
+Enum LOCATION_BUDGET_ACTION {
+  IMPORT
+  RETURN
+  USE
+  EXPORT
+  INVALID
 }
 
 Enum LOCATION_POINT_APPLIED_TYPE {
@@ -238,6 +259,8 @@ Ref: Discount.campaignId > Campaign.id
 Ref: ScheduleHistory.scheduleId > Schedule.id [delete: No Action]
 
 Ref: SystemSchedule.id - Schedule.id [delete: Cascade]
+
+Ref: LocationBudget.locationId > Location.id [delete: Cascade]
 
 Ref: LocationPointCampaign.id - Campaign.id [delete: Cascade]
 
